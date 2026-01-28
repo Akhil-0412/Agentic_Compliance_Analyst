@@ -6,11 +6,6 @@
             "maxDuration": 60
         }
     },
-    "plugin": {
-        "install": [
-            "pip install -r requirements.txt"
-        ]
-    },
     "rewrites": [
         {
             "source": "/api/(.*)",
