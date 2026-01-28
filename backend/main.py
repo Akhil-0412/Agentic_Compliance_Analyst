@@ -29,37 +29,42 @@ app.add_middleware(
 # In production, we might want per-session agents or lazy loading
 # Initialize Agent (Singleton for MVP)
 # In production, we might want per-session agents or lazy loading
-try:
-    if os.path.exists("data/processed/gdpr_structured.json"):
-        GDPR_INDEXER = ClauseIndexer()
-        # Load and Build
-        with open("data/processed/gdpr_structured.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-            # data is {..., "articles": [...]}
-            # We need to flatten this for the indexer
-            texts = []
-            metadata = []
-            if "articles" in data:
-                for art in data["articles"]:
-                    for clause in art.get("clauses", []):
-                        texts.append(clause["text"])
-                        metadata.append({
-                            "article_id": art["article_id"],
-                            "clause_id": clause["clause_id"],
-                            "text": clause["text"]
-                        })
-            
-            if texts:
-                print(f"🚀 Building Index with {len(texts)} clauses...")
-                GDPR_INDEXER.build(texts, metadata)
+# Lazy Loading Global State
+GDPR_INDEXER = None
+
+def get_gdpr_indexer():
+    global GDPR_INDEXER
+    if GDPR_INDEXER is None:
+        try:
+            print("⏳ Lazy Loading FAISS Indexer...")
+            if os.path.exists("data/processed/gdpr_structured.json"):
+                indexer = ClauseIndexer()
+                # Load and Build
+                with open("data/processed/gdpr_structured.json", "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    texts = []
+                    metadata = []
+                    if "articles" in data:
+                        for art in data["articles"]:
+                            for clause in art.get("clauses", []):
+                                texts.append(clause["text"])
+                                metadata.append({
+                                    "article_id": art["article_id"],
+                                    "clause_id": clause["clause_id"],
+                                    "text": clause["text"]
+                                })
+                    
+                    if texts:
+                        print(f"🚀 Building Index with {len(texts)} clauses...")
+                        indexer.build(texts, metadata)
+                        GDPR_INDEXER = indexer
+                    else:
+                        print("⚠️ No texts found in GDPR data!")
             else:
-                print("⚠️ No texts found in GDPR data!")
-    else:
-        print("⚠️ GDPR Data file not found.")
-        GDPR_INDEXER = None
-except Exception as e:
-    print(f"⚠️ Indexer Initialization Failed: {e}")
-    GDPR_INDEXER = None
+                print("⚠️ GDPR Data file not found.")
+        except Exception as e:
+            print(f"⚠️ Indexer Initialization Failed: {e}")
+    return GDPR_INDEXER
 
 class ChatRequest(BaseModel):
     query: str
@@ -76,8 +81,11 @@ async def chat_endpoint(req: ChatRequest):
     Standard Request-Response (Non-streaming)
     """
     try:
+        # Lazy load indexer on first request
+        indexer = get_gdpr_indexer()
+        
         agent = ComplianceAgent(
-            indexer=GDPR_INDEXER, 
+            indexer=indexer, 
             data_path="data/processed/gdpr_structured.json", 
             domain=req.domain
         )

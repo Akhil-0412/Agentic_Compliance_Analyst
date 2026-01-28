@@ -64,6 +64,11 @@ export default function ChatInterface({ domain, isDark }: { domain: string, isDa
                 body: JSON.stringify({ query: userMsg, domain })
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server Error ${response.status}: ${errorText || "No details provided"}`);
+            }
+
             const data = await response.json();
             const content = data.summary || data.response || JSON.stringify(data);
 
