@@ -1,0 +1,22 @@
+{
+    "name": "agentic-compliance-analyst-root",
+    "version": "0.1.0",
+    "private": true,
+    "workspaces": [
+        "frontend"
+    ],
+    "scripts": {
+        "dev": "npm run dev --workspace=frontend",
+        "build": "npm run build --workspace=frontend",
+        "start": "npm run start --workspace=frontend",
+        "lint": "npm run lint --workspace=frontend"
+    },
+    "dependencies": {
+        "next": "16.1.5",
+        "react": "19.2.3",
+        "react-dom": "19.2.3"
+    },
+    "engines": {
+        "node": "18.x"
+    }
+}
