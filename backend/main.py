@@ -75,6 +75,7 @@ class ChatRequest(BaseModel):
 def health_check():
     return {"status": "active", "system": "ComplianceOS"}
 
+@app.post("/chat")
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
     """
