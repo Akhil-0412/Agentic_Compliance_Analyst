@@ -1,0 +1,16 @@
+streamlit
+fastapi
+uvicorn
+sse-starlette
+groq
+instructor
+python-dotenv
+pandas
+sentence-transformers
+faiss-cpu
+numpy
+pydantic
+tavily-python
+rank-bm25
+torch
+requests
