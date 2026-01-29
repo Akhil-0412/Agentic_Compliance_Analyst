@@ -65,22 +65,15 @@ class ComplianceAgent:
             raise ValueError("No GROQ_API_KEY found in .env file.")
 
         # --- "DEEP CASCADE" MODEL STRATEGY ---
+        # Only use valid Groq models
         self.models = [
-            "openai/gpt-oss-120b",                # Tier 1: Massive Intelligence
-            "llama-3.3-70b-versatile",            # Tier 1: Standard Production
-            "qwen/qwen3-32b",                     # Tier 2: Strong Mid-size
-            "meta-llama/llama-4-maverick-17b-128e-instruct", # Tier 2: New Generation
-            "meta-llama/llama-4-scout-17b-16e-instruct",     # Tier 2: New Generation
-            "moonshotai/kimi-k2-instruct",        # Tier 3: Specialized
-            "moonshotai/kimi-k2-instruct-0905",   # Tier 3: Specialized
-            "openai/gpt-oss-20b",                 # Tier 3: Mid-size
-            "openai/gpt-oss-safeguard-20b",       # Tier 3: Mid-size
-            "groq/compound",                      # Tier 4: Fast/Routing
-            "groq/compound-mini",                 # Tier 4: Fast/Routing
-            "llama-3.1-8b-instant",               # Tier 5: High Speed Fallback
-            "allam-2-7b",                         # Tier 6: Lightweight
-            "canopylabs/orpheus-v1-english",      # Tier 6: Specialized English
-            "canopylabs/orpheus-arabic-saudi"     # Tier 6: Regional Fallback
+            "llama-3.3-70b-versatile",            # Tier 1: Best quality
+            "llama-3.1-70b-versatile",            # Tier 1: Stable
+            "llama3-70b-8192",                    # Tier 2: Fast
+            "mixtral-8x7b-32768",                 # Tier 2: Good balance
+            "llama-3.1-8b-instant",               # Tier 3: High speed
+            "llama3-8b-8192",                     # Tier 3: Fast fallback
+            "gemma2-9b-it",                       # Tier 4: Lightweight
         ]
         
         # Initialize Groq client
