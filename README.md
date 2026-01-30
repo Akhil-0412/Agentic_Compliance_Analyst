@@ -12,6 +12,11 @@ license: mit
 
 A FastAPI backend for GDPR/CCPA compliance analysis powered by LLMs.
 
+## Deployment Status
+
+- **Frontend**: [Vercel](https://vercel.com/akhil-0412s-projects/agentic-compliance-analyst-frontend)
+- **Backend**: [Hugging Face Space](https://huggingface.co/spaces/Akhil-008/agentic-compliance-analyst)
+
 ## Endpoints
 
 - `GET /` - Health check
