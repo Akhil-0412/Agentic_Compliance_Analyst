@@ -16,7 +16,7 @@ import {
 import clsx from "clsx";
 
 // Force rebuild for PRO view deployment
-export default function Sidebar({ activeDomain, setActiveDomain, activeView, setActiveView, isDark, toggleTheme }: any) {
+export default function Sidebar({ activeView, setActiveView, isDark, toggleTheme }: any) {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const menuItems = [
@@ -24,12 +24,6 @@ export default function Sidebar({ activeDomain, setActiveDomain, activeView, set
         { icon: Globe, label: "Global Domain", id: "global" },
         { icon: Search, label: "FDA Search", id: "search" },
         { icon: Database, label: "Knowledge Base", id: "kb" },
-    ];
-
-    const domains = [
-        { id: "GDPR", label: "GDPR (EU)", color: "bg-blue-500" },
-        { id: "FDA", label: "FDA (US)", color: "bg-red-500" },
-        { id: "CCPA", label: "CCPA (CA)", color: "bg-orange-500" },
     ];
 
     return (
@@ -61,59 +55,7 @@ export default function Sidebar({ activeDomain, setActiveDomain, activeView, set
                 )}
             </div>
 
-            {/* Domain Switcher */}
-            <div className="px-6 mb-8">
-                {!isCollapsed ? (
-                    <div className={clsx(
-                        "rounded-2xl p-4 shadow-sm border transition-colors",
-                        isDark ? "bg-stone-800 border-stone-700" : "bg-white border-sand-200"
-                    )}>
-                        <p className="text-xs text-gray-400 font-bold mb-3 uppercase tracking-wider">Active Workspace</p>
-                        <div className="flex flex-col gap-3">
-                            {domains.map((d) => (
-                                <button
-                                    key={d.id}
-                                    onClick={() => setActiveDomain(d.id)}
-                                    className={clsx(
-                                        "flex items-center gap-3 p-3 rounded-xl text-base font-medium transition-colors duration-200 group relative",
-                                        activeDomain === d.id
-                                            ? (isDark ? "text-white" : "text-stone-900")
-                                            : (isDark ? "text-stone-400 hover:text-white" : "text-gray-500 hover:text-stone-900")
-                                    )}
-                                >
-                                    {/* Liquid Active Pill */}
-                                    {activeDomain === d.id && (
-                                        <motion.div
-                                            layoutId="activePill"
-                                            className={clsx(
-                                                "absolute inset-0 rounded-xl shadow-sm z-0",
-                                                isDark ? "bg-stone-700" : "bg-stone-200"
-                                            )}
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                        />
-                                    )}
-
-                                    <div className="relative z-10 flex items-center gap-3">
-                                        <div className={`w-2.5 h-2.5 rounded-full ${d.color} shadow-sm group-hover:scale-125 transition-transform`} />
-                                        <span>{d.label}</span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-4">
-                        {domains.map((d) => (
-                            <div
-                                key={d.id}
-                                className={`w-4 h-4 rounded-full ${d.color} cursor-pointer hover:scale-125 transition-transform shadow-md`}
-                                onClick={() => setActiveDomain(d.id)}
-                                title={d.label}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
+            {/* Domain Switcher Removed - Moved to Chat Interface */}
 
             {/* Navigation */}
             <div className="flex-1 px-6 flex flex-col gap-3">

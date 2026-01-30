@@ -15,7 +15,7 @@ interface Message {
     metadata?: any;
 }
 
-export default function ChatInterface({ domain, isDark }: { domain: string, isDark: boolean }) {
+export default function ChatInterface({ domain, setDomain, isDark }: { domain: string, setDomain: (d: string) => void, isDark: boolean }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -212,31 +212,107 @@ export default function ChatInterface({ domain, isDark }: { domain: string, isDa
                 "absolute bottom-0 left-0 right-0 p-8 backdrop-blur-xl border-t transition-colors",
                 isDark ? "bg-stone-950/80 border-stone-800" : "bg-white/90 border-sand-100"
             )}>
-                <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={`Ask about ${domain} compliance...`}
-                        className={clsx(
-                            "w-full p-6 pr-24 rounded-3xl outline-none text-xl transition-all shadow-2xl",
-                            isDark
-                                ? "bg-stone-900 border-stone-800 text-white placeholder-stone-600 focus:ring-2 focus:ring-orange-500/50"
-                                : "bg-white border-sand-200 text-stone-800 placeholder-stone-400 border focus:ring-4 focus:ring-orange-500/20"
-                        )}
+                <div className="relative max-w-4xl mx-auto flex items-end gap-3">
+                    {/* Domain Selector */}
+                    <DomainSelector
+                        currentDomain={domain}
+                        setDomain={setDomain}
+                        isDark={isDark}
                     />
-                    <button
-                        type="submit"
-                        disabled={!input.trim() || isProcessing}
-                        className="absolute right-3 top-3 bottom-3 aspect-square bg-orange-500 hover:bg-orange-400 active:scale-95 transition-all text-white rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:grayscale shadow-lg shadow-orange-500/30"
-                    >
-                        <Send size={24} />
-                    </button>
-                </form>
+
+                    <form onSubmit={handleSubmit} className="relative flex-1">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder={`Ask about ${domain} compliance...`}
+                            className={clsx(
+                                "w-full p-6 pr-24 rounded-3xl outline-none text-xl transition-all shadow-2xl",
+                                isDark
+                                    ? "bg-stone-900 border-stone-800 text-white placeholder-stone-600 focus:ring-2 focus:ring-orange-500/50"
+                                    : "bg-white border-sand-200 text-stone-800 placeholder-stone-400 border focus:ring-4 focus:ring-orange-500/20"
+                            )}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || isProcessing}
+                            className="absolute right-3 top-3 bottom-3 aspect-square bg-orange-500 hover:bg-orange-400 active:scale-95 transition-all text-white rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:grayscale shadow-lg shadow-orange-500/30"
+                        >
+                            <Send size={24} />
+                        </button>
+                    </form>
+                </div>
                 <div className={clsx("text-center mt-4 text-xs font-medium tracking-wide opacity-50", isDark ? "text-stone-500" : "text-stone-400")}>
                     Trusted AI for Legal Compliance. Always verify with human counsel.
                 </div>
             </div>
+        </div>
+    );
+}
+
+function DomainSelector({ currentDomain, setDomain, isDark }: any) {
+    const [isOpen, setIsOpen] = useState(false);
+    const domains = [
+        { id: "GDPR", label: "GDPR (EU)", color: "bg-blue-500" },
+        { id: "FDA", label: "FDA (US)", color: "bg-red-500" },
+        { id: "CCPA", label: "CCPA (CA)", color: "bg-orange-500" },
+    ];
+
+    return (
+        <div className="relative relative z-50">
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        <div className="fixed inset-0 z-0" onClick={() => setIsOpen(false)} />
+                        <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className={clsx(
+                                "absolute bottom-full left-0 mb-4 w-64 p-2 rounded-2xl shadow-2xl border z-50 flex flex-col gap-1",
+                                isDark ? "bg-stone-900 border-stone-800" : "bg-white border-sand-200"
+                            )}
+                        >
+                            <p className={clsx("px-3 py-2 text-xs font-bold uppercase tracking-wider", isDark ? "text-stone-500" : "text-stone-400")}>
+                                Select Workspace
+                            </p>
+                            {domains.map((d) => (
+                                <button
+                                    key={d.id}
+                                    onClick={() => {
+                                        setDomain(d.id);
+                                        setIsOpen(false);
+                                    }}
+                                    className={clsx(
+                                        "flex items-center gap-3 p-3 rounded-xl transition-colors text-left",
+                                        currentDomain === d.id
+                                            ? (isDark ? "bg-stone-800 text-white" : "bg-sand-100 text-stone-900")
+                                            : (isDark ? "text-stone-400 hover:bg-stone-800 hover:text-white" : "text-stone-600 hover:bg-sand-50 hover:text-stone-900")
+                                    )}
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${d.color}`} />
+                                    <span className="font-medium">{d.label}</span>
+                                    {currentDomain === d.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current opacity-50" />}
+                                </button>
+                            ))}
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={clsx(
+                    "h-[80px] w-[80px] rounded-3xl flex flex-col items-center justify-center gap-1 transition-all shadow-lg border",
+                    isDark
+                        ? "bg-stone-900 border-stone-800 hover:bg-stone-800 text-white"
+                        : "bg-white border-sand-200 hover:bg-sand-50 text-stone-800",
+                    isOpen && "ring-2 ring-orange-500/50"
+                )}
+            >
+                <Globe size={24} className={isDark ? "text-stone-400" : "text-stone-500"} />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 text-center leading-none">{currentDomain}</span>
+            </button>
         </div>
     );
 }

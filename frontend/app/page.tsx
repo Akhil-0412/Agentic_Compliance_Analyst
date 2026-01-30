@@ -19,8 +19,6 @@ export default function Home() {
       isDark ? "bg-stone-950 text-white" : "bg-sand-50 text-stone-900"
     )}>
       <Sidebar
-        activeDomain={activeDomain}
-        setActiveDomain={setActiveDomain}
         activeView={activeView}
         setActiveView={setActiveView}
         isDark={isDark}
@@ -30,7 +28,11 @@ export default function Home() {
       {/* View Switcher */}
       <div className="flex-1 min-w-0">
         {activeView === "agent" && (
-          <ChatInterface domain={activeDomain} isDark={isDark} />
+          <ChatInterface
+            domain={activeDomain}
+            setDomain={setActiveDomain}
+            isDark={isDark}
+          />
         )}
 
         {activeView === "global" && (
