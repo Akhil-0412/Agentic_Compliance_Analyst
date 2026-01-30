@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
+// Force rebuild for PRO view deployment
 export default function Sidebar({ activeDomain, setActiveDomain, activeView, setActiveView, isDark, toggleTheme }: any) {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
