@@ -59,8 +59,28 @@ export default function GlobalComplianceView({ isDark }: { isDark: boolean }) {
                 </div>
             </div>
 
-            {/* Risk Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Risk Grid with Overlay */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+                {/* Closed Beta Overlay */}
+                <div className={clsx(
+                    "absolute inset-0 z-10 backdrop-blur-[2px] rounded-3xl flex flex-col items-center justify-center text-center p-8 border transition-colors",
+                    isDark ? "bg-stone-950/60 border-stone-800" : "bg-white/60 border-sand-200"
+                )}>
+                    <div className="mb-6 p-4 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 shadow-xl shadow-orange-500/20 animate-pulse">
+                        <ShieldAlert className="w-12 h-12 text-white" />
+                    </div>
+                    <h2 className={clsx("text-3xl font-bold mb-4", isDark ? "text-white" : "text-stone-900")}>
+                        Global Domain Access Restricted
+                    </h2>
+                    <p className={clsx("text-lg max-w-xl font-medium leading-relaxed", isDark ? "text-stone-300" : "text-stone-600")}>
+                        Regulatory Radar is currently in <span className="text-amber-500 font-bold">Closed Beta</span>.
+                        To ensure maximum accuracy and enhance the agent's calibration, we require large-scale human verification data before public release.
+                    </p>
+                    <div className="mt-8 px-6 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-500 font-mono text-sm tracking-widest">
+                        ACCESS CODE REQUIRED
+                    </div>
+                </div>
+
                 {REGIONS.map((region, idx) => (
                     <motion.div
                         key={region.id}
@@ -68,7 +88,7 @@ export default function GlobalComplianceView({ isDark }: { isDark: boolean }) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                         className={clsx(
-                            "rounded-3xl p-6 border flex flex-col gap-6 relative overflow-hidden group hover:shadow-2xl transition-all duration-300",
+                            "rounded-3xl p-6 border flex flex-col gap-6 relative overflow-hidden group hover:shadow-2xl transition-all duration-300 blur-sm select-none pointer-events-none opacity-50", // Added blur and disabled interaction
                             isDark ? "bg-stone-900 border-stone-800" : "bg-white border-sand-200",
                             region.status === "CRITICAL" && "ring-1 ring-red-500/50",
                             region.status === "ATTENTION" && "ring-1 ring-orange-500/50"

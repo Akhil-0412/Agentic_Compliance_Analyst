@@ -20,7 +20,7 @@ export default function Sidebar({ activeDomain, setActiveDomain, activeView, set
 
     const menuItems = [
         { icon: Bot, label: "Agent Chat", id: "agent" },
-        { icon: Globe, label: "Global Compliance", id: "global" },
+        { icon: Globe, label: "Global Domain", id: "global" },
         { icon: Search, label: "FDA Search", id: "search" },
         { icon: Database, label: "Knowledge Base", id: "kb" },
     ];
@@ -118,6 +118,7 @@ export default function Sidebar({ activeDomain, setActiveDomain, activeView, set
             <div className="flex-1 px-6 flex flex-col gap-3">
                 {menuItems.map((item) => {
                     const isActive = activeView === item.id;
+                    const isGlobal = item.id === "global";
                     return (
                         <button
                             key={item.id}
@@ -126,7 +127,10 @@ export default function Sidebar({ activeDomain, setActiveDomain, activeView, set
                                 "flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group hover:translate-x-1 relative overflow-hidden",
                                 isActive
                                     ? (isDark ? "bg-stone-800 text-orange-400 shadow-md" : "bg-white text-orange-600 shadow-sm")
-                                    : (isDark ? "text-stone-400 hover:bg-stone-800 hover:text-orange-400" : "text-stone-600 hover:bg-white hover:text-orange-600")
+                                    : (isGlobal
+                                        ? (isDark ? "text-amber-400 hover:bg-stone-800/50" : "text-amber-600 hover:bg-white")
+                                        : (isDark ? "text-stone-400 hover:bg-stone-800 hover:text-orange-400" : "text-stone-600 hover:bg-white hover:text-orange-600")
+                                    )
                             )}
                         >
                             {/* Active Indicator Line */}
@@ -137,9 +141,21 @@ export default function Sidebar({ activeDomain, setActiveDomain, activeView, set
                                 />
                             )}
 
-                            <item.icon className={clsx("w-6 h-6 shrink-0 transition-colors", isActive && "text-orange-500")} />
+                            {/* Shiny Effect for Global Domain */}
+                            {isGlobal && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+                            )}
+
+                            <item.icon className={clsx("w-6 h-6 shrink-0 transition-colors", isActive && "text-orange-500", isGlobal && !isActive && "text-amber-500")} />
                             {!isCollapsed && (
-                                <span className={clsx("font-semibold text-lg", isActive && "font-bold")}>{item.label}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={clsx("font-semibold text-lg", isActive && "font-bold")}>{item.label}</span>
+                                    {isGlobal && (
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm tracking-wider">
+                                            PRO
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </button>
                     )

@@ -22,12 +22,13 @@ export default function ChatInterface({ domain, isDark }: { domain: string, isDa
     const [currentThought, setCurrentThought] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+        messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
     };
 
     useEffect(() => {
-        scrollToBottom();
+        // Instant scroll on mount/change, smooth on new messages
+        scrollToBottom("smooth");
     }, [messages, isProcessing, currentThought]);
 
     // Reset messages when domain changes? Or keep history?
