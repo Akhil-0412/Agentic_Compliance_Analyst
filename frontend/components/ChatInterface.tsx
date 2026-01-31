@@ -54,9 +54,9 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                 await new Promise(r => setTimeout(r, 800));
             }
 
-            // Use HuggingFace backend directly
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-            const response = await fetch(`${apiUrl}/api/chat`, {
+            // Use Next.js Rewrite Proxy (configured in next.config.ts)
+            // This avoids CORS issues by routing through the Vercel server
+            const response = await fetch('/api/chat', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: userMsg, domain })
