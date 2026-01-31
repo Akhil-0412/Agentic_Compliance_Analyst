@@ -16,7 +16,7 @@ export default function Home() {
   return (
     <main className={clsx(
       "flex h-screen font-sans transition-colors duration-300",
-      isDark ? "bg-stone-950 text-white" : "bg-skin-50 bg-grain text-stone-900"
+      isDark ? "bg-neutral-950 text-white" : "bg-neutral-50 bg-grain text-neutral-900"
     )}>
       <Sidebar
         activeView={activeView}

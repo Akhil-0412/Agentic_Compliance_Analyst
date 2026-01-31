@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Globe, Loader2, FileText, BrainCircuit } from "lucide-react";
+import { Send, Globe, Loader2, FileText, BrainCircuit, Sparkles, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -27,13 +27,8 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
     };
 
     useEffect(() => {
-        // Instant scroll on mount/change, smooth on new messages
         scrollToBottom("smooth");
     }, [messages, isProcessing, currentThought]);
-
-    // Reset messages when domain changes? Or keep history?
-    // User requested "Slide fade everytime" clicked on tab.
-    // We can animate the entrance of the container on key={domain}.
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,7 +54,7 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                 await new Promise(r => setTimeout(r, 800));
             }
 
-            // Use HuggingFace backend directly (bypasses Vercel rewrite issues)
+            // Use HuggingFace backend directly
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/chat`, {
                 method: "POST",
@@ -88,45 +83,58 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
     return (
         <div className={clsx(
             "flex-1 h-screen flex flex-col relative overflow-hidden transition-colors duration-300",
-            isDark ? "bg-stone-950 text-sand-50" : "bg-skin-50 bg-grain text-stone-900"
+            isDark ? "bg-neutral-950 text-neutral-200" : "bg-grain text-neutral-900"
         )}>
-            {/* Background Decoration */}
+            {/* Background Gradient Spotlights */}
             <div className={clsx(
-                "absolute top-0 right-0 w-[600px] h-[600px] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none transition-colors duration-500",
-                isDark ? "bg-orange-900/10" : "bg-orange-100/40"
+                "absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full blur-[120px] pointer-events-none opacity-40",
+                isDark ? "bg-trust-900/20" : "bg-neutral-200"
             )} />
 
             {/* Header */}
             <div className={clsx(
-                "p-8 border-b flex items-center justify-between z-10 backdrop-blur-sm",
-                isDark ? "border-stone-800 bg-stone-950/80" : "border-sand-100 bg-white/80"
+                "px-8 py-6 flex items-center justify-between z-10",
+                isDark ? "bg-neutral-950/80 backdrop-blur-md border-b border-neutral-800" : "bg-white/50 backdrop-blur-md border-b border-neutral-200/50"
             )}>
                 <motion.div
                     key={domain}
-                    initial={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
                 >
-                    <h1 className={clsx("text-3xl font-bold transition-colors", isDark ? "text-white" : "text-stone-800")}>
-                        {domain === "GLOBAL" ? "Global Compliance Agent" : `${domain} Compliance Agent`}
-                    </h1>
-                    <p className={clsx("text-sm mt-1", isDark ? "text-stone-500" : "text-stone-400")}>
-                        Powered by Llama3 & Tavily
-                    </p>
+                    <div className="flex items-center gap-3">
+                        <div className={clsx("p-2 rounded-lg", isDark ? "bg-neutral-800" : "bg-white shadow-sm border border-neutral-200")}>
+                            <BrainCircuit className={isDark ? "text-trust-500" : "text-neutral-700"} size={20} />
+                        </div>
+                        <div>
+                            <h1 className={clsx("text-lg font-bold tracking-tight leading-none", isDark ? "text-white" : "text-neutral-900")}>
+                                {domain === "GLOBAL" ? "Global Compliance Agent" : `${domain} Legal Assistant`}
+                            </h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <p className={clsx("text-xs font-medium uppercase tracking-wider", isDark ? "text-neutral-500" : "text-neutral-500")}>
+                                    Reasoning Enabled • v2.4
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </motion.div>
             </div>
 
-            {/* Messages - Slide Fade on Domain Change */}
+            {/* Messages Area */}
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={domain} // Triggers animation on change
+                    key={domain}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                     className="flex-1 overflow-y-auto w-full flex justify-center scroll-smooth"
                 >
-                    <div className="w-full max-w-5xl p-8 space-y-10 pb-64">
+                    <div className="w-full max-w-4xl p-8 space-y-8 pb-48">
                         {messages.length === 0 && (
                             <div className="flex flex-col items-center justify-center w-full mt-10">
                                 <MagicBentoGrid onSelect={setInput} isDark={isDark} />
@@ -144,45 +152,45 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                                 )}
                             >
                                 <div className={clsx(
-                                    "max-w-[75%] p-8 rounded-3xl shadow-sm leading-relaxed relative overflow-hidden",
+                                    "max-w-[85%] p-6 rounded-2xl relative overflow-hidden interactive-card",
                                     m.role === "user"
-                                        ? "bg-orange-500 text-white rounded-tr-md shadow-orange-500/20"
+                                        ? "bg-neutral-900 text-white rounded-br-sm shadow-lg"
                                         : (isDark
-                                            ? "bg-stone-900 border border-stone-800 text-sand-100 rounded-tl-md"
-                                            : "bg-white border border-sand-100 text-stone-700 rounded-tl-md")
+                                            ? "bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-bl-sm"
+                                            : "glass-panel text-neutral-800 rounded-bl-sm shadow-glass")
                                 )}>
                                     {/* AI Header */}
                                     {m.role === "ai" && (
-                                        <div className="flex items-center gap-2 mb-4 text-xs font-bold text-orange-500 uppercase tracking-widest">
-                                            <BotIcon /> Agent Response
+                                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-200/50 dark:border-neutral-800">
+                                            <Sparkles size={14} className="text-trust-600" />
+                                            <span className="text-xs font-bold text-trust-600 uppercase tracking-widest">Analysis</span>
                                         </div>
                                     )}
 
                                     {/* Content */}
-                                    <div className={clsx("prose prose-lg max-w-none", isDark ? "prose-invert prose-headings:text-orange-100 prose-p:text-stone-300" : "prose-orange prose-headings:text-stone-800")}>
+                                    <div className={clsx("prose prose-sm md:prose-base max-w-none", isDark ? "prose-invert" : "prose-neutral")}>
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {m.content}
                                         </ReactMarkdown>
                                     </div>
 
-                                    {/* Metadata Cards */}
+                                    {/* Metadata Footer */}
                                     {m.role === "ai" && m.metadata?.risk_level && (
                                         <div className={clsx(
-                                            "mt-6 pt-6 border-t flex gap-6",
-                                            isDark ? "border-stone-800" : "border-stone-100"
+                                            "mt-5 pt-3 flex gap-4 text-xs font-medium border-t",
+                                            isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-200/50 text-neutral-400"
                                         )}>
-                                            <Badge label="Risk Level" value={m.metadata.risk_level} color="red" isDark={isDark} />
-                                            <Badge label="Confidence" value={`${(m.metadata.confidence_score * 100).toFixed(0)}%`} color="green" isDark={isDark} />
+                                            <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Risk: {m.metadata.risk_level}</span>
+                                            <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Confidence: {(m.metadata.confidence_score * 100).toFixed(0)}%</span>
                                         </div>
                                     )}
                                 </div>
                             </motion.div>
                         ))}
 
-                        {/* Invisible element to scroll to */}
                         <div ref={messagesEndRef} />
 
-                        {/* Loading Bubble */}
+                        {/* Reasoning Indicator */}
                         {isProcessing && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
@@ -190,16 +198,11 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                                 className="flex w-full justify-start"
                             >
                                 <div className={clsx(
-                                    "max-w-[75%] p-6 rounded-3xl rounded-tl-sm shadow-sm flex items-center gap-4",
-                                    isDark ? "bg-stone-900 border border-stone-800 text-sand-100" : "bg-white border border-sand-100 text-stone-700"
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
+                                    isDark ? "bg-neutral-900 border-neutral-800 text-neutral-400" : "bg-white border-neutral-200 text-neutral-500"
                                 )}>
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/10 text-orange-500">
-                                        <Loader2 className="animate-spin w-5 h-5" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-orange-500 mb-1">Agent is Thinking</span>
-                                        <span className="text-sm font-medium animate-pulse">{currentThought}</span>
-                                    </div>
+                                    <Loader2 className="animate-spin w-4 h-4" />
+                                    <span className="text-xs font-medium tracking-wide">{currentThought}</span>
                                 </div>
                             </motion.div>
                         )}
@@ -207,44 +210,47 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                 </motion.div>
             </AnimatePresence>
 
-            {/* Input - Floating & Centered */}
-            <div className={clsx(
-                "absolute bottom-0 left-0 right-0 p-8 backdrop-blur-xl border-t transition-colors",
-                isDark ? "bg-stone-950/80 border-stone-800" : "bg-white/90 border-sand-100"
-            )}>
-                <div className="relative max-w-4xl mx-auto flex items-end gap-3">
-                    {/* Domain Selector */}
-                    <DomainSelector
-                        currentDomain={domain}
-                        setDomain={setDomain}
-                        isDark={isDark}
-                    />
+            {/* Command Center Input */}
+            <div className="absolute bottom-10 left-0 right-0 px-8 z-20">
+                <div className={clsx(
+                    "max-w-3xl mx-auto rounded-3xl p-2 shadow-elevation-high border transition-colors",
+                    isDark ? "bg-neutral-900 border-neutral-700" : "bg-white border-neutral-200"
+                )}>
+                    <div className="relative flex items-center gap-2">
+                        {/* Domain Selector */}
+                        <DomainSelector
+                            currentDomain={domain}
+                            setDomain={setDomain}
+                            isDark={isDark}
+                        />
 
-                    <div className="relative flex-1">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             disabled={domain === "GLOBAL"}
-                            placeholder={domain === "GLOBAL" ? "Global Agent Coming Soon (Pro Feature)" : `Ask about ${domain} compliance...`}
+                            placeholder={domain === "GLOBAL" ? "Feature Locked: Global Reasoning Network Coming Soon" : "Enter a compliance query or upload regulation text..."}
                             className={clsx(
-                                "w-full p-6 pr-24 rounded-3xl outline-none text-xl transition-all shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed",
-                                isDark
-                                    ? "bg-stone-900 border-stone-800 text-white placeholder-stone-600 focus:ring-2 focus:ring-orange-500/50"
-                                    : "bg-white border-sand-200 text-stone-800 placeholder-stone-400 border focus:ring-4 focus:ring-orange-500/20"
+                                "flex-1 bg-transparent p-4 outline-none text-lg placeholder-neutral-400 transition-all",
+                                isDark ? "text-white" : "text-neutral-900"
                             )}
                         />
+
                         <button
                             type="submit"
+                            onClick={handleSubmit}
                             disabled={!input.trim() || isProcessing || domain === "GLOBAL"}
-                            className="absolute right-3 top-3 bottom-3 aspect-square bg-orange-500 hover:bg-orange-400 active:scale-95 transition-all text-white rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:grayscale shadow-lg shadow-orange-500/30"
+                            className={clsx(
+                                "p-3 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 disabled:grayscale hover:scale-105 active:scale-95",
+                                isDark ? "bg-white text-black hover:bg-neutral-200" : "bg-neutral-900 text-white hover:bg-black"
+                            )}
                         >
-                            <Send size={24} />
+                            {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
                         </button>
                     </div>
                 </div>
-                <div className={clsx("text-center mt-4 text-xs font-medium tracking-wide opacity-50", isDark ? "text-stone-500" : "text-stone-400")}>
-                    Trusted AI for Legal Compliance. Always verify with human counsel.
+                <div className={clsx("text-center mt-3 text-[10px] font-medium tracking-widest uppercase opacity-40", isDark ? "text-neutral-500" : "text-neutral-400")}>
+                    AI Legal Assistant • Verify all outputs independently
                 </div>
             </div>
         </div>
@@ -257,11 +263,11 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
         { id: "GDPR", label: "GDPR (EU)", color: "bg-blue-500" },
         { id: "FDA", label: "FDA (US)", color: "bg-red-500" },
         { id: "CCPA", label: "CCPA (CA)", color: "bg-orange-500" },
-        { id: "GLOBAL", label: "Global Domain", color: "bg-purple-500", isPro: true },
+        { id: "GLOBAL", label: "Risk Radar (Global)", color: "bg-purple-500", isPro: true },
     ];
 
     return (
-        <div className="relative relative z-50">
+        <div className="relative">
             <AnimatePresence>
                 {isOpen && (
                     <>
@@ -271,12 +277,12 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             className={clsx(
-                                "absolute bottom-full left-0 mb-4 w-64 p-2 rounded-2xl shadow-2xl border z-50 flex flex-col gap-1",
-                                isDark ? "bg-stone-900 border-stone-800" : "bg-white border-sand-200"
+                                "absolute bottom-full left-0 mb-4 w-60 p-1.5 rounded-xl shadow-xl border z-50 flex flex-col gap-0.5",
+                                isDark ? "bg-neutral-900 border-neutral-700" : "bg-white border-neutral-200"
                             )}
                         >
-                            <p className={clsx("px-3 py-2 text-xs font-bold uppercase tracking-wider", isDark ? "text-stone-500" : "text-stone-400")}>
-                                Select Workspace
+                            <p className={clsx("px-3 py-2 text-[10px] font-bold uppercase tracking-wider", isDark ? "text-neutral-500" : "text-neutral-400")}>
+                                Active Jurisdiction
                             </p>
                             {domains.map((d: any) => (
                                 <button
@@ -286,20 +292,17 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
                                         setIsOpen(false);
                                     }}
                                     className={clsx(
-                                        "flex items-center gap-3 p-3 rounded-xl transition-colors text-left",
+                                        "flex items-center gap-3 p-2.5 rounded-lg transition-colors text-left text-sm font-medium",
                                         currentDomain === d.id
-                                            ? (isDark ? "bg-stone-800 text-white" : "bg-sand-100 text-stone-900")
-                                            : (isDark ? "text-stone-400 hover:bg-stone-800 hover:text-white" : "text-stone-600 hover:bg-sand-50 hover:text-stone-900")
+                                            ? (isDark ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-900")
+                                            : (isDark ? "text-neutral-400 hover:bg-neutral-800/50" : "text-neutral-500 hover:bg-neutral-50")
                                     )}
                                 >
-                                    <div className={`w-2.5 h-2.5 rounded-full ${d.color}`} />
-                                    <span className="font-medium">{d.label}</span>
+                                    <div className={`w-2 h-2 rounded-full ${d.color}`} />
+                                    <span>{d.id}</span>
                                     {d.isPro && (
-                                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm tracking-wider">
-                                            PRO
-                                        </span>
+                                        <span className="ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold bg-neutral-900 text-white">PRO</span>
                                     )}
-                                    {currentDomain === d.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current opacity-50" />}
                                 </button>
                             ))}
                         </motion.div>
@@ -310,30 +313,13 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
-                    "h-[80px] w-[80px] rounded-3xl flex flex-col items-center justify-center gap-1 transition-all shadow-lg border",
-                    isDark
-                        ? "bg-stone-900 border-stone-800 hover:bg-stone-800 text-white"
-                        : "bg-white border-sand-200 hover:bg-sand-50 text-stone-800",
-                    isOpen && "ring-2 ring-orange-500/50"
+                    "h-12 px-4 rounded-xl flex items-center gap-2 transition-all hover:bg-neutral-100 dark:hover:bg-neutral-800 border-r border-transparent hover:border-neutral-200 dark:hover:border-neutral-700",
                 )}
             >
-                <Globe size={24} className={isDark ? "text-stone-400" : "text-stone-500"} />
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 text-center leading-none">{currentDomain}</span>
+                <Globe size={18} className={isDark ? "text-neutral-400" : "text-neutral-500"} />
+                <span className={clsx("text-sm font-bold tracking-wide", isDark ? "text-white" : "text-neutral-800")}>{currentDomain}</span>
+                <ChevronDown size={14} className="opacity-50" />
             </button>
         </div>
     );
-}
-
-function Badge({ label, value, color, isDark }: any) {
-    const textColor = color === "red" ? "text-rose-500" : "text-emerald-500";
-    return (
-        <div className="flex flex-col">
-            <span className={clsx("text-[10px] uppercase font-bold tracking-wider mb-1", isDark ? "text-stone-500" : "text-stone-400")}>{label}</span>
-            <span className={clsx("font-bold text-lg", textColor)}>{value}</span>
-        </div>
-    )
-}
-
-function BotIcon() {
-    return <BrainCircuit size={16} />
 }

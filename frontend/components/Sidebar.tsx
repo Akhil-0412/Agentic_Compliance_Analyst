@@ -20,34 +20,37 @@ export default function Sidebar({ activeView, setActiveView, isDark, toggleTheme
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const menuItems = [
-        { icon: Bot, label: "Agent Chat", id: "agent" },
+        { icon: Bot, label: "Agent", id: "agent" },
         { icon: Radar, label: "Risk Radar", id: "global" },
         { icon: Search, label: "FDA Search", id: "search" },
-        { icon: Database, label: "Knowledge Base", id: "kb" },
+        { icon: Database, label: "Memory", id: "kb" },
     ];
 
     return (
         <motion.div
-            initial={{ width: 320 }} // Wider sidebar
-            animate={{ width: isCollapsed ? 96 : 320 }}
+            initial={{ width: 280 }}
+            animate={{ width: isCollapsed ? 80 : 280 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={clsx(
-                "h-screen border-r flex flex-col relative z-20 shadow-xl transition-colors duration-300",
-                isDark ? "bg-stone-900 border-stone-800" : "bg-skin-50 bg-grain border-sand-200"
+                "h-screen border-r flex flex-col relative z-20 transition-colors duration-300",
+                isDark ? "bg-neutral-900 border-neutral-800" : "bg-neutral-50/50 backdrop-blur-xl border-neutral-200"
             )}
         >
             {/* Header */}
-            <div className="p-8 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
-                    <ShieldCheck className="text-white w-6 h-6" />
+            <div className="p-6 flex items-center gap-3">
+                <div className={clsx(
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                    isDark ? "bg-neutral-800 text-neutral-400" : "bg-neutral-200 text-neutral-600"
+                )}>
+                    <ShieldCheck className="w-5 h-5" />
                 </div>
                 {!isCollapsed && (
                     <motion.div
-                        initial={{ opacity: 0, x: -10 }}
+                        initial={{ opacity: 0, x: -5 }}
                         animate={{ opacity: 1, x: 0 }}
                         className={clsx(
-                            "font-bold text-2xl tracking-tight transition-colors",
-                            isDark ? "text-sand-50" : "text-stone-800"
+                            "font-semibold text-lg tracking-tight",
+                            isDark ? "text-neutral-200" : "text-neutral-800"
                         )}
                     >
                         ComplianceOS
@@ -55,10 +58,8 @@ export default function Sidebar({ activeView, setActiveView, isDark, toggleTheme
                 )}
             </div>
 
-            {/* Domain Switcher Removed - Moved to Chat Interface */}
-
             {/* Navigation */}
-            <div className="flex-1 px-6 flex flex-col gap-3">
+            <div className="flex-1 px-4 flex flex-col gap-1">
                 {menuItems.map((item) => {
                     const isActive = activeView === item.id;
                     const isRiskRadar = item.id === "global";
@@ -67,36 +68,18 @@ export default function Sidebar({ activeView, setActiveView, isDark, toggleTheme
                             key={item.id}
                             onClick={() => setActiveView(item.id)}
                             className={clsx(
-                                "flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group hover:translate-x-1 relative overflow-hidden",
+                                "flex items-center gap-3 p-3 rounded-lg transition-all duration-200 group relative",
                                 isActive
-                                    ? (isDark ? "bg-stone-800 text-orange-400 shadow-md" : "bg-white text-orange-600 shadow-sm")
-                                    : (isRiskRadar
-                                        ? (isDark ? "text-amber-400 hover:bg-stone-800/50" : "text-amber-600 hover:bg-white")
-                                        : (isDark ? "text-stone-400 hover:bg-stone-800 hover:text-orange-400" : "text-stone-600 hover:bg-white hover:text-orange-600")
-                                    )
+                                    ? (isDark ? "bg-neutral-800 text-white shadow-sm" : "bg-white text-neutral-900 shadow-elevation-low border border-neutral-200/50")
+                                    : (isDark ? "text-neutral-500 hover:bg-neutral-800/50 hover:text-neutral-300" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900")
                             )}
                         >
-                            {/* Active Indicator Line */}
-                            {isActive && (
-                                <motion.div
-                                    layoutId="navIndicator"
-                                    className="absolute left-0 top-2 bottom-2 w-1 bg-orange-500 rounded-r-md"
-                                />
-                            )}
-
-                            {/* Shiny Effect for Risk Radar */}
-                            {isRiskRadar && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
-                            )}
-
-                            <item.icon className={clsx("w-6 h-6 shrink-0 transition-colors", isActive && "text-orange-500", isRiskRadar && !isActive && "text-amber-500")} />
+                            <item.icon className={clsx("w-5 h-5 shrink-0 transition-colors", isActive && "text-trust-600", isRiskRadar && !isActive && "text-amber-500/80")} />
                             {!isCollapsed && (
-                                <div className="flex items-center gap-2">
-                                    <span className={clsx("font-semibold text-lg", isActive && "font-bold")}>{item.label}</span>
+                                <div className="flex items-center gap-2 flex-1">
+                                    <span className={clsx("text-sm font-medium")}>{item.label}</span>
                                     {isRiskRadar && (
-                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm tracking-wider">
-                                            PRO
-                                        </span>
+                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-500" />
                                     )}
                                 </div>
                             )}
@@ -107,29 +90,26 @@ export default function Sidebar({ activeView, setActiveView, isDark, toggleTheme
 
             {/* Footer / Toggle */}
             <div className={clsx(
-                "p-6 border-t flex flex-col gap-4",
-                isDark ? "border-stone-800" : "border-sand-200"
+                "p-4 border-t flex flex-col gap-2",
+                isDark ? "border-neutral-800" : "border-neutral-200"
             )}>
-                {/* Dark Mode Toggle */}
                 <button
                     onClick={toggleTheme}
                     className={clsx(
-                        "flex items-center justify-center p-3 rounded-xl transition-colors",
-                        isDark ? "bg-stone-800 text-yellow-400 hover:bg-stone-700" : "bg-sand-100 text-stone-600 hover:bg-sand-200"
+                        "flex items-center justify-center p-2 rounded-lg transition-colors",
+                        isDark ? "hover:bg-neutral-800 text-neutral-500" : "hover:bg-neutral-100 text-neutral-400"
                     )}
                 >
-                    {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                    {!isCollapsed && <span className="ml-3 font-medium">{isDark ? "Light Mode" : "Dark Mode"}</span>}
+                    {isDark ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
-
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className={clsx(
-                        "w-full flex items-center justify-center p-2 rounded-lg transition-colors",
-                        isDark ? "hover:bg-stone-800 text-stone-500" : "hover:bg-sand-100 text-stone-400"
+                        "flex items-center justify-center p-2 rounded-lg transition-colors",
+                        isDark ? "hover:bg-neutral-800 text-neutral-500" : "hover:bg-neutral-100 text-neutral-400"
                     )}
                 >
-                    {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                    {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
             </div>
         </motion.div>
