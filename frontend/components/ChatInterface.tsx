@@ -169,6 +169,43 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                                         )}
 
                                         {/* Content */}
+                                        {/* REASONING MAP (Structured Fact->Law Table) */}
+                                        {m.role === "ai" && m.metadata?.reasoning_map && m.metadata.reasoning_map.length > 0 && (
+                                            <div className={clsx(
+                                                "mb-4 p-3 rounded-lg border",
+                                                isDark ? "bg-neutral-800/50 border-neutral-700" : "bg-neutral-50 border-neutral-200"
+                                            )}>
+                                                <p className="text-xs font-bold uppercase tracking-wider mb-2 text-trust-600">
+                                                    Reasoning Map (Fact → Law)
+                                                </p>
+                                                <table className="w-full text-xs">
+                                                    <thead>
+                                                        <tr className={clsx(
+                                                            "text-left border-b",
+                                                            isDark ? "border-neutral-700" : "border-neutral-200"
+                                                        )}>
+                                                            <th className="py-1 pr-2 font-semibold">Fact</th>
+                                                            <th className="py-1 pr-2 font-semibold">Legal Meaning</th>
+                                                            <th className="py-1 pr-2 font-semibold">GDPR Subsection</th>
+                                                            <th className="py-1 font-semibold">Justification</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {m.metadata.reasoning_map.map((entry: any, idx: number) => (
+                                                            <tr key={idx} className={clsx(
+                                                                "border-b last:border-b-0",
+                                                                isDark ? "border-neutral-700/50" : "border-neutral-100"
+                                                            )}>
+                                                                <td className="py-2 pr-2">{entry.fact}</td>
+                                                                <td className="py-2 pr-2">{entry.legal_meaning}</td>
+                                                                <td className="py-2 pr-2 font-mono text-trust-600">{entry.gdpr_subsection}</td>
+                                                                <td className="py-2">{entry.justification}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                         <div className={clsx("prose prose-sm md:prose-base max-w-none", isDark ? "prose-invert" : "prose-neutral")}>
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                 {m.content}

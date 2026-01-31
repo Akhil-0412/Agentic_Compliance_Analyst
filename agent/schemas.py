@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import List, Optional, Literal
 from enum import Enum
 
 class RiskLevel(str, Enum):
@@ -7,6 +7,51 @@ class RiskLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+# Normalized GDPR Subsection Tokens (Whitelist)
+GDPR_SUBSECTIONS = Literal[
+    # Article 83(2) - Fine Mitigation Factors
+    "83(2)(a)", "83(2)(b)", "83(2)(c)", "83(2)(d)", "83(2)(e)", 
+    "83(2)(f)", "83(2)(g)", "83(2)(h)", "83(2)(i)", "83(2)(j)", "83(2)(k)",
+    # Article 17 - Right to Erasure
+    "17(1)", "17(2)", "17(3)(a)", "17(3)(b)", "17(3)(c)", "17(3)(d)", "17(3)(e)",
+    # Article 6 - Lawful Basis
+    "6(1)(a)", "6(1)(b)", "6(1)(c)", "6(1)(d)", "6(1)(e)", "6(1)(f)",
+    # Article 5 - Principles
+    "5(1)(a)", "5(1)(b)", "5(1)(c)", "5(1)(d)", "5(1)(e)", "5(1)(f)", "5(2)",
+    # Other common articles
+    "4(1)", "4(2)", "4(7)", "4(8)", "33(1)", "34(1)", "45(1)", "46(1)"
+]
+
+class ReasoningMapEntry(BaseModel):
+    """
+    A single Fact -> Law mapping entry.
+    Each entry MUST reference exactly ONE GDPR subsection.
+    """
+    fact: str = Field(
+        ..., 
+        description="A factual element explicitly stated in the user query."
+    )
+    legal_meaning: str = Field(
+        ..., 
+        description="What this fact represents legally (e.g., 'mitigation of harm', 'cooperation')."
+    )
+    gdpr_subsection: str = Field(
+        ..., 
+        description="Exact GDPR subsection (e.g., '83(2)(c)'). Must be a single, normalized token."
+    )
+    justification: str = Field(
+        ..., 
+        description="One sentence explaining why this fact satisfies the subsection."
+    )
+    
+    @field_validator('gdpr_subsection')
+    @classmethod
+    def validate_single_subsection(cls, v):
+        # Enforce 1:1 mapping: No commas or 'and' allowed
+        if ',' in v or ' and ' in v.lower():
+            raise ValueError("Each entry must reference exactly ONE subsection. Split into multiple entries.")
+        return v
 
 class ComplianceResponse(BaseModel):
     """
@@ -18,7 +63,11 @@ class ComplianceResponse(BaseModel):
     )
     legal_basis: str = Field(
         ..., 
-        description="Specific articles or clauses that apply (e.g., 'Article 83(4)')."
+        description="The specific statutory basis (e.g., 'Article 6(1)(c)')."
+    )
+    scope_limitation: str = Field(
+        ...,
+        description="The precise limits of any refusal or processing. Must include 'only data strictly necessary' if applicable."
     )
     risk_analysis: str = Field(
         ..., 
@@ -26,20 +75,28 @@ class ComplianceResponse(BaseModel):
     )
     risk_level: RiskLevel = Field(
         ..., 
-        description="The severity of the risk."
+        description="The severity of the risk. Must be MEDIUM or HIGH for any partial refusal."
     )
     confidence_score: float = Field(
         ..., 
         ge=0.0, 
         le=1.0, 
-        description="Confidence score between 0.0 and 1.0 based on how well the context answers the query."
+        description="Confidence score between 0.0 and 1.0 based on citation strength."
     )
     references: List[str] = Field(
         default_factory=list,
         description="List of specific article IDs referenced (e.g. ['83', '28'])."
     )
+    reasoning_map: List[ReasoningMapEntry] = Field(
+        ...,
+        description="MANDATORY: A list of Fact -> Law mappings. Every GDPR subsection cited in summary MUST appear here first."
+    )
 
-    @field_validator('confidence_score')
+    @field_validator('risk_level')
+    @classmethod
+    def validate_risk_consistency(cls, v, info):
+        # We can add consistency checks here if needed, but logic is better handled in agent validation loop
+        return v
     @classmethod
     def validate_confidence(cls, v):
         return round(v, 2)
