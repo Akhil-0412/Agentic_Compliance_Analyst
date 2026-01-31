@@ -108,7 +108,7 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                     transition={{ duration: 0.4 }}
                 >
                     <h1 className={clsx("text-3xl font-bold transition-colors", isDark ? "text-white" : "text-stone-800")}>
-                        {domain} Compliance Agent
+                        {domain === "GLOBAL" ? "Global Compliance Agent" : `${domain} Compliance Agent`}
                     </h1>
                     <p className={clsx("text-sm mt-1", isDark ? "text-stone-500" : "text-stone-400")}>
                         Powered by Llama3 & Tavily
@@ -220,14 +220,15 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                         isDark={isDark}
                     />
 
-                    <form onSubmit={handleSubmit} className="relative flex-1">
+                    <div className="relative flex-1">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            placeholder={`Ask about ${domain} compliance...`}
+                            disabled={domain === "GLOBAL"}
+                            placeholder={domain === "GLOBAL" ? "Global Agent Coming Soon (Pro Feature)" : `Ask about ${domain} compliance...`}
                             className={clsx(
-                                "w-full p-6 pr-24 rounded-3xl outline-none text-xl transition-all shadow-2xl",
+                                "w-full p-6 pr-24 rounded-3xl outline-none text-xl transition-all shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed",
                                 isDark
                                     ? "bg-stone-900 border-stone-800 text-white placeholder-stone-600 focus:ring-2 focus:ring-orange-500/50"
                                     : "bg-white border-sand-200 text-stone-800 placeholder-stone-400 border focus:ring-4 focus:ring-orange-500/20"
@@ -235,12 +236,12 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                         />
                         <button
                             type="submit"
-                            disabled={!input.trim() || isProcessing}
+                            disabled={!input.trim() || isProcessing || domain === "GLOBAL"}
                             className="absolute right-3 top-3 bottom-3 aspect-square bg-orange-500 hover:bg-orange-400 active:scale-95 transition-all text-white rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:grayscale shadow-lg shadow-orange-500/30"
                         >
                             <Send size={24} />
                         </button>
-                    </form>
+                    </div>
                 </div>
                 <div className={clsx("text-center mt-4 text-xs font-medium tracking-wide opacity-50", isDark ? "text-stone-500" : "text-stone-400")}>
                     Trusted AI for Legal Compliance. Always verify with human counsel.
@@ -256,6 +257,7 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
         { id: "GDPR", label: "GDPR (EU)", color: "bg-blue-500" },
         { id: "FDA", label: "FDA (US)", color: "bg-red-500" },
         { id: "CCPA", label: "CCPA (CA)", color: "bg-orange-500" },
+        { id: "GLOBAL", label: "Global Domain", color: "bg-purple-500", isPro: true },
     ];
 
     return (
@@ -276,7 +278,7 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
                             <p className={clsx("px-3 py-2 text-xs font-bold uppercase tracking-wider", isDark ? "text-stone-500" : "text-stone-400")}>
                                 Select Workspace
                             </p>
-                            {domains.map((d) => (
+                            {domains.map((d: any) => (
                                 <button
                                     key={d.id}
                                     onClick={() => {
@@ -292,6 +294,11 @@ function DomainSelector({ currentDomain, setDomain, isDark }: any) {
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${d.color}`} />
                                     <span className="font-medium">{d.label}</span>
+                                    {d.isPro && (
+                                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm tracking-wider">
+                                            PRO
+                                        </span>
+                                    )}
                                     {currentDomain === d.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current opacity-50" />}
                                 </button>
                             ))}

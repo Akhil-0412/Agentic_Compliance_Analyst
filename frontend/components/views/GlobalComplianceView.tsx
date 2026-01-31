@@ -44,7 +44,7 @@ export default function GlobalComplianceView({ isDark }: { isDark: boolean }) {
             <div className="flex justify-between items-end">
                 <div>
                     <h1 className={clsx("text-4xl font-bold tracking-tight mb-2", isDark ? "text-white" : "text-stone-900")}>
-                        Regulatory Risk Radar
+                        Risk Radar
                     </h1>
                     <p className={clsx("text-lg", isDark ? "text-stone-400" : "text-stone-500")}>
                         Real-time surveillance of emerging regulatory threats and confidence decay.
