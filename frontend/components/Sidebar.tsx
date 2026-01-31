@@ -33,7 +33,7 @@ export default function Sidebar({ activeView, setActiveView, isDark, toggleTheme
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={clsx(
                 "h-screen border-r flex flex-col relative z-20 shadow-xl transition-colors duration-300",
-                isDark ? "bg-stone-900 border-stone-800" : "bg-sand-50 border-sand-200"
+                isDark ? "bg-stone-900 border-stone-800" : "bg-skin-50 bg-grain border-sand-200"
             )}
         >
             {/* Header */}

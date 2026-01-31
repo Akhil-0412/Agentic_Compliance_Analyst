@@ -20,6 +20,11 @@ const config: Config = {
                     100: '#FFEDD5',
                     500: '#F97316', // Primary
                     600: '#EA580C',
+                },
+                skin: {
+                    50: '#F5EBE0',  // Light Skin / Bone
+                    100: '#EBDFCF',
+                    200: '#DBCBB6',
                 }
             },
             backgroundImage: {

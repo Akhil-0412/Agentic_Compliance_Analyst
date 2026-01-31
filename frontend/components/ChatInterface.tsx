@@ -88,7 +88,7 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
     return (
         <div className={clsx(
             "flex-1 h-screen flex flex-col relative overflow-hidden transition-colors duration-300",
-            isDark ? "bg-stone-950 text-sand-50" : "bg-white text-stone-900"
+            isDark ? "bg-stone-950 text-sand-50" : "bg-skin-50 bg-grain text-stone-900"
         )}>
             {/* Background Decoration */}
             <div className={clsx(
