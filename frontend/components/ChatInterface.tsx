@@ -124,91 +124,96 @@ export default function ChatInterface({ domain, setDomain, isDark }: { domain: s
                 </motion.div>
             </div>
 
-            {/* Messages Area */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={domain}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 overflow-y-auto w-full flex justify-center scroll-smooth"
-                >
-                    <div className="w-full max-w-4xl p-8 space-y-8 pb-48">
-                        {messages.length === 0 && (
-                            <div className="flex flex-col items-center justify-center w-full mt-10">
-                                <MagicBentoGrid onSelect={setInput} isDark={isDark} />
-                            </div>
-                        )}
-
-                        {messages.map((m, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={clsx(
-                                    "flex w-full",
-                                    m.role === "user" ? "justify-end" : "justify-start"
-                                )}
-                            >
-                                <div className={clsx(
-                                    "max-w-[85%] p-6 rounded-2xl relative overflow-hidden interactive-card",
-                                    m.role === "user"
-                                        ? "bg-neutral-900 text-white rounded-br-sm shadow-lg"
-                                        : (isDark
-                                            ? "bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-bl-sm"
-                                            : "glass-panel text-neutral-800 rounded-bl-sm shadow-glass")
-                                )}>
-                                    {/* AI Header */}
-                                    {m.role === "ai" && (
-                                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-200/50 dark:border-neutral-800">
-                                            <Sparkles size={14} className="text-trust-600" />
-                                            <span className="text-xs font-bold text-trust-600 uppercase tracking-widest">Analysis</span>
-                                        </div>
-                                    )}
-
-                                    {/* Content */}
-                                    <div className={clsx("prose prose-sm md:prose-base max-w-none", isDark ? "prose-invert" : "prose-neutral")}>
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {m.content}
-                                        </ReactMarkdown>
+            {/* Messages Area - Scroll Fix */}
+            <div className="flex-1 min-h-0 w-full relative">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={domain}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute inset-0 overflow-y-auto scroll-smooth py-4"
+                    >
+                        <div className="w-full h-full flex justify-center">
+                            <div className="w-full max-w-4xl px-8 space-y-8 pb-48">
+                                {messages.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center w-full mt-10">
+                                        <MagicBentoGrid onSelect={setInput} isDark={isDark} />
                                     </div>
+                                )}
 
-                                    {/* Metadata Footer */}
-                                    {m.role === "ai" && m.metadata?.risk_level && (
+                                {messages.map((m, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className={clsx(
+                                            "flex w-full",
+                                            m.role === "user" ? "justify-end" : "justify-start"
+                                        )}
+                                    >
                                         <div className={clsx(
-                                            "mt-5 pt-3 flex gap-4 text-xs font-medium border-t",
-                                            isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-200/50 text-neutral-400"
+                                            "max-w-[85%] p-6 rounded-2xl relative overflow-hidden interactive-card",
+                                            m.role === "user"
+                                                ? "bg-neutral-900 text-white rounded-br-sm shadow-lg"
+                                                : (isDark
+                                                    ? "bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-bl-sm"
+                                                    : "glass-panel text-neutral-800 rounded-bl-sm shadow-glass")
                                         )}>
-                                            <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Risk: {m.metadata.risk_level}</span>
-                                            <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Confidence: {(m.metadata.confidence_score * 100).toFixed(0)}%</span>
+                                            {/* AI Header */}
+                                            {m.role === "ai" && (
+                                                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-200/50 dark:border-neutral-800">
+                                                    <Sparkles size={14} className="text-trust-600" />
+                                                    <span className="text-xs font-bold text-trust-600 uppercase tracking-widest">Analysis</span>
+                                                </div>
+                                            )}
+
+                                            {/* Content */}
+                                            <div className={clsx("prose prose-sm md:prose-base max-w-none", isDark ? "prose-invert" : "prose-neutral")}>
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {m.content}
+                                                </ReactMarkdown>
+                                            </div>
+
+                                            {/* Metadata Footer */}
+                                            {m.role === "ai" && m.metadata?.risk_level && (
+                                                <div className={clsx(
+                                                    "mt-5 pt-3 flex gap-4 text-xs font-medium border-t",
+                                                    isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-200/50 text-neutral-400"
+                                                )}>
+                                                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Risk: {m.metadata.risk_level}</span>
+                                                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Confidence: {(m.metadata.confidence_score * 100).toFixed(0)}%</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            </motion.div>
-                        ))}
+                                    </motion.div>
+                                ))}
 
-                        <div ref={messagesEndRef} />
+                                <div ref={messagesEndRef} />
 
-                        {/* Reasoning Indicator */}
-                        {isProcessing && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex w-full justify-start"
-                            >
-                                <div className={clsx(
-                                    "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
-                                    isDark ? "bg-neutral-900 border-neutral-800 text-neutral-400" : "bg-white border-neutral-200 text-neutral-500"
-                                )}>
-                                    <Loader2 className="animate-spin w-4 h-4" />
-                                    <span className="text-xs font-medium tracking-wide">{currentThought}</span>
-                                </div>
-                            </motion.div>
-                        )}
-                    </div>
-                </motion.div>
-            </AnimatePresence>
+                                {/* Reasoning Indicator */}
+                                {isProcessing && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex w-full justify-start"
+                                    >
+                                        <div className={clsx(
+                                            "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
+                                            isDark ? "bg-neutral-900 border-neutral-800 text-neutral-400" : "bg-white border-neutral-200 text-neutral-500"
+                                        )}>
+                                            <Loader2 className="animate-spin w-4 h-4" />
+                                            <span className="text-xs font-medium tracking-wide">{currentThought}</span>
+                                        </div>
+                                    </motion.div>
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
+            </div>
 
             {/* Command Center Input */}
             <div className="absolute bottom-10 left-0 right-0 px-8 z-20">

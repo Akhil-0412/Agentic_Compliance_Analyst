@@ -83,46 +83,51 @@ class ComplianceAgent:
 
     def _safe_api_call(self, messages, temperature=0, response_model=None):
         """
-        ULTIMATE FAILOVER LOOP:
-        Tries every Key on every Model until one works.
-        Supports Structured Output via `response_model`.
+        ULTIMATE FAILOVER LOOP
         """
         errors = []
+        import logging
+        logging.basicConfig(filename='backend_debug.log', level=logging.INFO)
+        
+        logging.info(f"Starting API call with models: {self.models}")
+        
         for model in self.models:
             for i, key in enumerate(self.api_keys):
                 try:
+                    masked_key = key[:4] + "..." + key[-4:]
+                    logging.info(f"Trying Model: {model} with Key: {masked_key}")
+                    
                     # Re-instantiate client with current key
                     base = Groq(api_key=key)
                     # Use instructor client
                     client = instructor.from_groq(base, mode=instructor.Mode.TOOLS)
 
+                    response = None
                     if response_model:
-                        return client.chat.completions.create(
+                        response = client.chat.completions.create(
                             messages=messages,
                             model=model,
                             temperature=temperature,
                             response_model=response_model
                         )
                     else:
-                        # Fallback for standard string responses (e.g. validation)
-                        return base.chat.completions.create(
+                        response = base.chat.completions.create(
                            messages=messages,
                            model=model,
                            temperature=temperature
                         )
+                    
+                    logging.info(f"✅ Success with {model}")
+                    return response
 
-                except groq.RateLimitError:
-                    print(f"⚠️ Rate Limit: {model} (Key #{i+1}) exhausted. Skipping...")
-                    continue 
-                except groq.NotFoundError:
-                    print(f"⚠️ Model Not Found/Access Denied: {model}. Skipping...")
-                    continue
                 except Exception as e:
+                    logging.error(f"❌ Error on {model}: {str(e)}")
                     print(f"⚠️ Error on {model}: {e}")
-                    errors.append(str(e))
+                    errors.append(f"{model}: {str(e)}")
                     continue
             print(f"🔻 Downgrading capabilities: Switching from {model}...")
 
+        logging.critical(f"ALL MODELS EXHAUSTED. Errors: {errors}")
         raise RuntimeError(f"❌ SERVICE OUTAGE: All {len(self.models)} models exhausted. Errors: {errors[:3]}")
 
     def analyze(self, user_query: str):
