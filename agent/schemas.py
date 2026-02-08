@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Union
 from enum import Enum
 
 class RiskLevel(str, Enum):
@@ -7,6 +7,16 @@ class RiskLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+    
+    @classmethod
+    def _missing_(cls, value):
+        """Handle case-insensitive enum matching (e.g., 'MEDIUM' -> 'medium')"""
+        if isinstance(value, str):
+            normalized = value.lower()
+            for member in cls:
+                if member.value == normalized:
+                    return member
+        return None
 
 # Normalized GDPR Subsection Tokens (Whitelist)
 GDPR_SUBSECTIONS = Literal[
@@ -61,9 +71,9 @@ class ComplianceResponse(BaseModel):
         ..., 
         description="A concise summary of the legal situation based on the provided text."
     )
-    legal_basis: str = Field(
+    legal_basis: Union[str, List[str]] = Field(
         ..., 
-        description="The specific statutory basis (e.g., 'Article 6(1)(c)')."
+        description="The specific statutory basis (e.g., 'Article 6(1)(c)'). If multiple, can be a list or comma-separated string."
     )
     scope_limitation: str = Field(
         ...,
@@ -78,12 +88,12 @@ class ComplianceResponse(BaseModel):
         description="The severity of the risk. Must be MEDIUM or HIGH for any partial refusal."
     )
     confidence_score: float = Field(
-        ..., 
+        default=0.5, 
         ge=0.0, 
         le=1.0, 
         description="Confidence score between 0.0 and 1.0 based on citation strength."
     )
-    references: List[str] = Field(
+    references: Optional[List[str]] = Field(
         default_factory=list,
         description="List of specific article IDs referenced (e.g. ['83', '28'])."
     )
@@ -92,10 +102,24 @@ class ComplianceResponse(BaseModel):
         description="MANDATORY: A list of Fact -> Law mappings. Every GDPR subsection cited in summary MUST appear here first."
     )
 
+    @field_validator('risk_level', mode='before')
+    @classmethod
+    def normalize_risk_level(cls, v):
+        if isinstance(v, str):
+            # Map upper case to lower case enum values
+            return v.lower()
+        return v
+    
+    @field_validator('legal_basis', mode='before')
+    @classmethod
+    def normalize_legal_basis(cls, v):
+        if isinstance(v, list):
+            return ", ".join(v)
+        return v
+
     @field_validator('risk_level')
     @classmethod
     def validate_risk_consistency(cls, v, info):
-        # We can add consistency checks here if needed, but logic is better handled in agent validation loop
         return v
     @classmethod
     def validate_confidence(cls, v):

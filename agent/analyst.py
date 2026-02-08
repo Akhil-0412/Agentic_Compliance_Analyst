@@ -2,6 +2,7 @@ import os
 import re
 import groq
 from groq import Groq
+from openai import OpenAI
 from dotenv import load_dotenv
 import instructor
 
@@ -32,13 +33,14 @@ PROMPTS = {
         "   Your 'summary' and 'legal_basis' MUST only cite subsections that appear in your reasoning_map.\n"
         "   If a subsection is not in the map, you CANNOT cite it in prose.\n"
         "STEP 5: SCOPE LIMITATION. If claiming Partial Refusal/Exception, state: 'Only data strictly necessary for the obligation may be retained. All other data must be erased.'\n"
-        "STEP 6: RISK CLASSIFICATION. LOW=No exposure. MEDIUM=Sensitive/Lawful. HIGH=Enforcement/Fine Risk.\n\n"
+        "STEP 6: RISK CLASSIFICATION. 'low'=No exposure. 'medium'=Sensitive/Lawful. 'high'=Enforcement/Fine Risk.\n\n"
         "OUTPUT SCHEMA (Populate ALL JSON fields):\n"
         "- reasoning_map: MANDATORY list of Fact->Law mappings (build this FIRST).\n"
         "- summary: The full ANALYSIS derived from your reasoning_map.\n"
         "- legal_basis: List of Articles/Subsections (MUST match reasoning_map).\n"
+        "- references: List of article IDs (e.g. ['83', '6']). Can be empty.\n"
         "- scope_limitation: From Step 5.\n"
-        "- risk_level: From Step 6.\n"
+        "- risk_level: 'low', 'medium', or 'high'.\n"
         "- risk_analysis: Brief justification of risk.\n"
     ),
     "FDA": (
@@ -72,30 +74,40 @@ class ComplianceAgent:
         self.context_builder = ContextBuilder(data_path) if domain == "GDPR" else None
         self.tavily = LawsuitSearcher() if domain == "FDA" else None
         
-        # --- API KEY MANAGEMENT ---
-        self.api_keys = []
-        if os.getenv("GROQ_API_KEY"): self.api_keys.append(os.getenv("GROQ_API_KEY"))
-        if os.getenv("GROQ_API_KEY2"): self.api_keys.append(os.getenv("GROQ_API_KEY2"))
+        # --- API KEY MANAGEMENT (PRIORITIZE OPENROUTER) ---
+        self.openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        self.groq_key = os.getenv("GROQ_API_KEY")
         
-        if not self.api_keys:
-            raise ValueError("No GROQ_API_KEY found in .env file.")
-
-        # --- "DEEP CASCADE" MODEL STRATEGY ---
-        # Only use valid Groq models
-        self.models = [
-            "llama-3.3-70b-versatile",            # Tier 1: Best quality
-            "llama-3.1-70b-versatile",            # Tier 1: Stable
-            "llama3-70b-8192",                    # Tier 2: Fast
-            "mixtral-8x7b-32768",                 # Tier 2: Good balance
-            "llama-3.1-8b-instant",               # Tier 3: High speed
-            "llama3-8b-8192",                     # Tier 3: Fast fallback
-            "gemma2-9b-it",                       # Tier 4: Lightweight
-        ]
-        
-        # Initialize Groq client
-        self.base_client = Groq(api_key=self.api_keys[0])
-        # Patch with Instructor
-        self.client = instructor.from_groq(self.base_client, mode=instructor.Mode.TOOLS)
+        if self.openrouter_key:
+            print("🚀 Switched to OpenRouter Provider")
+            self.models = [
+                "meta-llama/llama-3.3-70b-instruct", # Intelligence King
+                "google/gemini-2.0-flash-001",       # Speed King
+                "meta-llama/llama-3.1-8b-instruct"   # Fallback
+            ]
+            self.api_keys = [self.openrouter_key] 
+            self.base_client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=self.openrouter_key
+            )
+            # Use JSON mode for OpenRouter standard compliance
+            self.client = instructor.from_openai(self.base_client, mode=instructor.Mode.JSON)
+            
+        elif self.groq_key:
+            print("🚀 Using Groq Provider")
+            self.models = [
+                "llama-3.1-8b-instant",
+                "llama-3.3-70b-versatile",
+                "gemma2-9b-it",
+            ]
+            self.api_keys = [self.groq_key]
+            # Initialize Groq client
+            self.base_client = Groq(api_key=self.groq_key)
+            # Patch with Instructor
+            self.client = instructor.from_groq(self.base_client, mode=instructor.Mode.TOOLS)
+            
+        else:
+            raise ValueError("No API Key found. Set OPENROUTER_API_KEY or GROQ_API_KEY.")
 
     def _safe_api_call(self, messages, temperature=0, response_model=None):
         """
@@ -137,6 +149,13 @@ class ComplianceAgent:
                     return response
 
                 except Exception as e:
+                    error_msg = str(e).lower()
+                    # CRITICAL SHORT-CIRCUIT: Do not retry validation errors (saves tokens)
+                    if "tool call validation failed" in error_msg or "validation error" in error_msg:
+                        logging.critical(f"🛑 SCHEMA MISMATCH (ABORTING): {error_msg}")
+                        print(f"🛑 SCHEMA MISMATCH (ABORTING): {error_msg}")
+                        return f"Schema Validation Error: {error_msg}" # Stop immediately
+                        
                     logging.error(f"❌ Error on {model}: {str(e)}")
                     print(f"⚠️ Error on {model}: {e}")
                     errors.append(f"{model}: {str(e)}")
@@ -179,18 +198,40 @@ class ComplianceAgent:
                 subsection = entry.gdpr_subsection.lower()
                 meaning_lower = entry.legal_meaning.lower()
                 justification_lower = entry.justification.lower()
+                fact_lower = entry.fact.lower()
+                combined_text = meaning_lower + " " + justification_lower + " " + fact_lower
                 
                 # Anti-Hallucination for 83(2)(h)
                 if "83(2)(h)" in subsection:
                     errors.append("❌ Subsection Error: Do not cite 83(2)(h) for notification. Use 83(2)(c) (mitigation actions) instead.")
                 
-                # Semantic binding: (c) must relate to mitigation
-                if "83(2)(c)" in subsection and not any(w in meaning_lower + justification_lower for w in ["mitigat", "damage", "action", "harm"]):
-                    errors.append(f"❌ Semantic Mismatch: Entry for 83(2)(c) must describe 'mitigation' or 'actions taken'. Found: '{entry.legal_meaning}'")
+                # --- SEMANTIC SPLIT: Authority vs Data Subject ---
+                # 83(2)(f) = Authority/Investigation/Regulator
+                # 83(2)(c) = Data Subject/Harm/Mitigation
+                authority_keywords = ["authority", "regulator", "investigat", "supervis", "cooperat"]
+                data_subject_keywords = ["data subject", "affected", "harm", "damage", "protect", "inform"]
                 
-                # Semantic binding: (f) must relate to cooperation
-                if "83(2)(f)" in subsection and not any(w in meaning_lower + justification_lower for w in ["cooperat", "authority", "investigat"]):
-                    errors.append(f"❌ Semantic Mismatch: Entry for 83(2)(f) must describe 'cooperation'. Found: '{entry.legal_meaning}'")
+                # If citing 83(2)(c), MUST relate to data subjects, NOT authority
+                if "83(2)(c)" in subsection:
+                    if any(w in combined_text for w in authority_keywords) and not any(w in combined_text for w in data_subject_keywords):
+                        errors.append(f"❌ Semantic Split Violation: 83(2)(c) is for 'actions to mitigate damage to DATA SUBJECTS', not authority cooperation. Use 83(2)(f) instead. Found: '{entry.fact}'")
+                    if not any(w in combined_text for w in ["mitigat", "damage", "action", "harm", "protect", "subject"]):
+                        errors.append(f"❌ Semantic Mismatch: Entry for 83(2)(c) must describe 'mitigation' or 'harm to data subjects'. Found: '{entry.legal_meaning}'")
+                
+                # If citing 83(2)(f), MUST relate to authority cooperation
+                if "83(2)(f)" in subsection:
+                    if not any(w in combined_text for w in authority_keywords):
+                        errors.append(f"❌ Semantic Mismatch: Entry for 83(2)(f) must describe 'cooperation with authority'. Found: '{entry.legal_meaning}'")
+                
+                # --- FACT INTEGRITY CHECK (No Invented Facts) ---
+                # Extract key nouns from the fact and check if they appear in the original query
+                fact_key_terms = [t for t in entry.fact.lower().split() if len(t) > 4 and t not in ["which", "their", "about", "after", "before", "under", "where"]]
+                query_lower = query.lower()
+                
+                # Check if at least one key term from the fact appears in the query
+                fact_grounded = any(term in query_lower for term in fact_key_terms)
+                if not fact_grounded and len(fact_key_terms) > 0:
+                    errors.append(f"❌ Fact Integrity Error: The fact '{entry.fact}' does not appear in the user query. Do NOT invent facts to satisfy depth requirements.")
         
         # --- LEGACY RULES (Keep for compatibility) ---
         q_lower = query.lower()
@@ -367,6 +408,10 @@ class ComplianceAgent:
                 response_model=ComplianceResponse
             )
             
+            # Error Handling: If _safe_api_call returned an error string, bubble it up
+            if isinstance(structured_response, str):
+                return structured_response
+
             # SELF-CORRECTION LOOP (Agentic Validation)
             validation_error = self._validate_response(structured_response, user_query)
             if validation_error:

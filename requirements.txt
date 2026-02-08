@@ -14,3 +14,4 @@ tavily-python
 rank-bm25
 torch
 requests
+openai
